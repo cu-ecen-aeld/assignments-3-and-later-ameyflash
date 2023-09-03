@@ -1,8 +1,11 @@
 #!/bin/bash
 
+echo "Checking for arguments..."
 if [ $# -lt 2 ]; then
     echo "Error : Arguments not specified correctly!!!"
     exit 1
+else
+    echo "Pass"
 fi
 
 filesdir=$1
@@ -11,12 +14,9 @@ searchstr=$2
 filecount=0
 linecount=0
 
-echo "Finder Script"
-echo $filesdir
-echo $searchstr
-
+echo "Checking if file exists..."
 if [ -e $filesdir ]; then
-    echo "File exists"
+    echo "Pass"
 else
     echo "File not found"
     exit 1
