@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 echo "Checking for arguments..."
 if [ $# -lt 2 ]; then
@@ -24,9 +24,6 @@ fi
 
 filecount=$(find $filesdir -type f | wc -l)
 
-for f in $filesdir
-do
-    linecount=$(grep -r $searchstr $filesdir | wc -l)
-done
+linecount=$(grep -r $searchstr $filesdir | wc -l)
 
 echo "The number of files are $filecount and the number of matching lines are $linecount"
