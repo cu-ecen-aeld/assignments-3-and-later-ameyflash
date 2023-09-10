@@ -3,6 +3,7 @@
 echo "Checking for arguments..."
 if [ $# -lt 2 ]; then
     echo "Error : Arguments not specified correctly!!!"
+    echo "Usage: $ ./writer.sh <writefile> <writestr>"
     exit 1
 else
     echo "Pass"
@@ -12,6 +13,7 @@ writefile=$1
 writestr=$2
 writedir=$(dirname "$writefile")
 
+# Create directory if it doesn't exists
 mkdir -p "$writedir"
 
 echo "Writing to file..."
