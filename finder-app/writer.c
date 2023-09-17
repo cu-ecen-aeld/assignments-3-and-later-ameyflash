@@ -69,5 +69,9 @@ int main(int argc, char *argv[])
     // enter log for successful write
     syslog(LOG_DEBUG,"Writing %s to %s",writestr,writefile);
 
+    // close logs and files
+    closelog();
+    close(file_open_ret);
+
     return 0;
 }
