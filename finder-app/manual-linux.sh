@@ -89,10 +89,11 @@ ${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "program interpre
 ${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "Shared library"
 
 # TODO: Add library dependencies to rootfs
-sudo ln -s /home/arm-cross-compiler/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib/ld-linux-aarch64.so.1 ${OUTDIR}/rootfs/lib
-sudo ln -s /home/arm-cross-compiler/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libc.so.6 ${OUTDIR}/rootfs/lib64
-sudo ln -s /home/arm-cross-compiler/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libm.so.6 ${OUTDIR}/rootfs/lib64
-sudo ln -s /home/arm-cross-compiler/gcc-arm-10.2-2020.11-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/libc/lib64/libresolv.so.2 ${OUTDIR}/rootfs/lib64
+COMPILER_ROOT=$(${CROSS_COMPILE}gcc --print-sysroot)
+sudo cp ${COMPILER_ROOT}/lib/ld-linux-aarch64.so.* ${OUTDIR}/rootfs/lib
+sudo cp ${COMPILER_ROOT}/lib64/libc.so.* ${OUTDIR}/rootfs/lib64
+sudo cp ${COMPILER_ROOT}/lib64/libm.so.* ${OUTDIR}/rootfs/lib64
+sudo cp ${COMPILER_ROOT}/lib64/libresolv.so.* ${OUTDIR}/rootfs/lib64
 
 # TODO: Make device nodes
 cd "${OUTDIR}/rootfs"
@@ -110,8 +111,9 @@ make CROSS_COMPILE=${CROSS_COMPILE}
 cp writer "${OUTDIR}/rootfs/home"
 cp finder.sh "${OUTDIR}/rootfs/home"
 cp finder-test.sh "${OUTDIR}/rootfs/home"
-cp conf/username.txt "${OUTDIR}/rootfs/home"
 cp autorun-qemu.sh "${OUTDIR}/rootfs/home"
+cp -r conf/ "${OUTDIR}/rootfs/home"
+#cp conf/username.txt "${OUTDIR}/rootfs/home"
 
 # TODO: Chown the root directory
 cd "${OUTDIR}/rootfs"
