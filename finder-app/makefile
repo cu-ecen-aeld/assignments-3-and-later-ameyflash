@@ -6,6 +6,8 @@ CFLAGS = -Wall -Werror -g
 EXEC = writer
 
 ##################### Targets #####################
+all : writer
+
 writer: writer.o
 	$(CC) $(CFLAGS) -o $(EXEC) writer.o
 
