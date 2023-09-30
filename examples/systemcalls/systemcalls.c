@@ -35,7 +35,12 @@ bool do_system(const char *cmd)
 
     // check for error in command execution
     if(!WIFEXITED(ret))
-        return false;
+    {
+	if(WEXITSTATUS(ret))
+	{
+		return false;
+	}
+    }
 
     return true;
 }
@@ -155,6 +160,7 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
 
     if (fd == -1)
     {
+        va_end(args);
         return false;
     }
 
@@ -163,20 +169,23 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     // if fork() failed
     if(pid < 0)
     {
+        va_end(args);
         return false;
     }
     else if(pid == 0)
     {   
         // redirect output to file
         if (dup2(fd, 1) == -1)
-        {   
+        {
+            va_end(args);   
             return false;
         }
         close(fd);
         // execute command for successful fork()
         ret = execv(command[0], command);
         if(-1 == ret)
-        {
+        {                
+            va_end(args);
             exit(EXIT_FAILURE);
         }
     }
@@ -188,15 +197,18 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
         {
             if(WEXITSTATUS(status))
             {
+                va_end(args);
                 return false;
             }
             else
             {
+                va_end(args);
                 return true;
             }
         }
         else
         {
+            va_end(args);
             return false;
         }
     }
