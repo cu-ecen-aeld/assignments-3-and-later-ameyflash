@@ -1,6 +1,10 @@
 #include <stdbool.h>
 #include <pthread.h>
 
+typedef struct{
+    bool success;
+}command_status_t;
+
 /**
  * This structure should be dynamically allocated and passed as
  * an argument to your thread using pthread_create.
