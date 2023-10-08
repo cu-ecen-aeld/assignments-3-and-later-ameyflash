@@ -1,7 +1,7 @@
 /***********************************************************************
  * @file      		aesdsocket.c
  * @version   		0.1
- * @brief		
+ * @brief		Socket server application code
  *
  * @author    		Amey More, Amey.More@Colorado.edu
  * @date      		Oct 4, 2023

@@ -1,7 +1,7 @@
 /***********************************************************************
  * @file      		aesdsocket.c
  * @version   		0.1
- * @brief		
+ * @brief		Socket server application code
  *
  * @author    		Amey More, Amey.More@Colorado.edu
  * @date      		Oct 4, 2023
@@ -92,7 +92,7 @@ void global_clean_up()
 	ret = close(data_file_fd);
 	if(ret == RET_ERROR)
 	{
-		syslog(LOG_ERR,"File close failed\n");
+		syslog(LOG_ERR,"File close failed");
 		command_status.success = false;
 	}
 	
@@ -100,7 +100,7 @@ void global_clean_up()
 	ret = unlink(data_file);
 	if(ret == RET_ERROR)
 	{
-		syslog(LOG_ERR,"File delete failed\n");
+		syslog(LOG_ERR,"File delete failed");
 	}
 	
 	// close socket
@@ -110,7 +110,7 @@ void global_clean_up()
 	close(accept_fd);
 	
 	// Close syslog
-	syslog(LOG_INFO,"AESD Socket application end\n");
+	syslog(LOG_INFO,"AESD Socket application end");
 	closelog();
 }
 
@@ -212,7 +212,7 @@ void socket_application()
 	if(data_file_fd == RET_ERROR)
 	{
 		ERROR_LOG("File open failed\n");
-		syslog(LOG_ERR,"File open failed\n");
+		syslog(LOG_ERR,"File open failed");
 		command_status.success = false;
 	}
 	
@@ -244,14 +244,14 @@ void socket_application()
 		if (ret != RET_SUCCESS)
 		{
 			ERROR_LOG("getaddrinfo() failed\n");
-			syslog(LOG_ERR,"getaddrinfo() failed\n");
+			syslog(LOG_ERR,"getaddrinfo() failed");
 			command_status.success = false;
 			break;
 		}
 		if(result == NULL)
 		{
 			ERROR_LOG("getaddrinfo() malloc failed\n");
-			syslog(LOG_ERR,"getaddrinfo() malloc failed\n");
+			syslog(LOG_ERR,"getaddrinfo() malloc failed");
 			command_status.success = false;
 			break;
 		}
@@ -268,7 +268,7 @@ void socket_application()
 		if(socket_fd == RET_ERROR)
 		{
 			ERROR_LOG("Socket creation failed\n");
-			syslog(LOG_ERR,"Socket creation failed\n");
+			syslog(LOG_ERR,"Socket creation failed");
 			command_status.success = false;
 			break;
 		}
@@ -277,7 +277,7 @@ void socket_application()
 				sizeof(int)) == -1)
                {
 			ERROR_LOG("Set socket opt failed\n");
-			syslog(LOG_ERR,"Set socket opt failed\n");
+			syslog(LOG_ERR,"Set socket opt failed");
 			command_status.success = false;
 			break;
 		}
@@ -350,7 +350,7 @@ void socket_application()
 		if(ret == RET_ERROR)
 		{
 			ERROR_LOG("Listen failed\n");
-			syslog(LOG_ERR,"Listen failed\n");
+			syslog(LOG_ERR,"Listen failed");
 			command_status.success = false;
 			break;
 		}
@@ -377,7 +377,7 @@ void socket_application()
 			if(accept_fd == RET_ERROR)
 			{
 				ERROR_LOG("Accept failed\n");
-				syslog(LOG_ERR,"Accept failed\n");
+				syslog(LOG_ERR,"Accept failed");
 				command_status.success = false;
 				break;
 			}
@@ -386,7 +386,7 @@ void socket_application()
 			    	   get_in_addr((struct sockaddr *)&client_addr),
 			    	   s, sizeof s);
 			//printf("server: got connection from %s\n", s);
-			syslog(LOG_INFO,"Accepted connection from %s\n",s);
+			syslog(LOG_INFO,"Accepted connection from %s",s);
 			
 			/********************************************************* 
 			*  STEP 3 : 
@@ -409,7 +409,7 @@ void socket_application()
 				if(recv_bytes == RET_ERROR)
 				{
 					ERROR_LOG("Receive failed\n");
-					syslog(LOG_ERR,"Receive failed\n");
+					syslog(LOG_ERR,"Receive failed");
 					command_status.success = false;
 					break;
 				}
@@ -422,7 +422,7 @@ void socket_application()
 				if(ret == RET_ERROR)
 				{
 					ERROR_LOG("File write failed\n");
-					syslog(LOG_ERR,"File write failed\n");
+					syslog(LOG_ERR,"File write failed");
 					command_status.success = false;
 					break;
 				}
@@ -453,7 +453,7 @@ void socket_application()
 			if(seek_ret == RET_ERROR)
 			{
 				ERROR_LOG("lseek failed\n");
-				syslog(LOG_ERR,"lseek failed\n");
+				syslog(LOG_ERR,"lseek failed");
 				command_status.success = false;
 				break;
 			}
@@ -465,7 +465,7 @@ void socket_application()
 				if(bytes_read == RET_ERROR)
 				{
 					ERROR_LOG("File read failed\n");
-					syslog(LOG_ERR,"File read failed\n");
+					syslog(LOG_ERR,"File read failed");
 					command_status.success = false;
 					break;
 				}
@@ -486,7 +486,7 @@ void socket_application()
 				if(send_bytes == RET_ERROR)
 				{
 					ERROR_LOG("Send failed\n");
-					syslog(LOG_ERR,"Send failed\n");
+					syslog(LOG_ERR,"Send failed");
 					command_status.success = false;
 					break;
 				}
@@ -506,7 +506,7 @@ void socket_application()
 			*  in a loop until SIGINT or SIGTERM is received.
 			*********************************************************/
 			close(accept_fd);
-			syslog(LOG_INFO,"Closed connection from %s\n",s);
+			syslog(LOG_INFO,"Closed connection from %s",s);
 		}
 		
 	}while(0);
