@@ -17,7 +17,7 @@
  * https://www.gnu.org/software/libc/manual/html_node/
  * Termination-in-Handler.html
  *
- * 
+ * https://www.thegeekstuff.com/2012/02/c-daemon-process/ 
  ************************************************************************/
 #include "aesdsocket.h"
 
@@ -295,13 +295,49 @@ void socket_application()
 		if(ret == RET_ERROR)
 		{
 			ERROR_LOG("Bind failed\n");
-			syslog(LOG_ERR,"Bind failed\n");
+			syslog(LOG_ERR,"Bind failed");
 			command_status.success = false;
 			break;
 		}
 		
 		// free malloced addr struct returned
 		freeaddrinfo(result);
+		
+		if(deamon_mode)
+		{
+			pid_t process_id = fork();
+			if (process_id < 0)
+			{
+				ERROR_LOG("Fork failed\n");
+				syslog(LOG_ERR,"Fork failed");
+				command_status.success = false;
+				break;
+			}
+			
+			// PARENT PROCESS. Need to kill it.
+			if (process_id > 0)
+			{
+				syslog(LOG_INFO,"Parent process terminated");
+				// return success in exit status
+				exit(0);
+			}
+			
+			//unmask the file mode
+			umask(0);
+			//set new session
+			pid_t sid = setsid();
+			if(sid < 0)
+			{
+				// Return failure
+				exit(1);
+			}
+			// Change the current working directory to root.
+			chdir("/");
+			// Close stdin. stdout and stderr
+			close(STDIN_FILENO);
+			close(STDOUT_FILENO);
+			close(STDERR_FILENO);
+		}
 		
 		/*
 		*	-> listen for connections on a socket
