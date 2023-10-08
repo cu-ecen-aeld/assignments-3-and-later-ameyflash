@@ -188,7 +188,7 @@ void socket_application()
 	syslog(LOG_INFO,"AESD Socket application started");
 	if(deamon_mode)
 		syslog(LOG_INFO,"Started as a deamon");
-	DEBUG_LOG("AESD Socket start\n");
+	//DEBUG_LOG("AESD Socket start\n");
 	
 	// signal handler for SIGINT and SIGTERM
 	signal(SIGINT, handle_termination);
@@ -414,8 +414,8 @@ void socket_application()
 					break;
 				}
 				//buf[recv_bytes]='\0';
-				DEBUG_LOG("Buffer : %ld",recv_bytes);
-				DEBUG_LOG("Buffer : %s",buf);
+				//DEBUG_LOG("Buffer : %ld",recv_bytes);
+				//DEBUG_LOG("Buffer : %s",buf);
 				
 				// write to file
 				ret = write(data_file_fd, buf, recv_bytes);
@@ -470,8 +470,8 @@ void socket_application()
 					break;
 				}
 				
-				DEBUG_LOG("Bytes Read : %ld",bytes_read);			
-				DEBUG_LOG("Read Buffer : \n%s",read_buf);
+				//DEBUG_LOG("Bytes Read : %ld",bytes_read);			
+				//DEBUG_LOG("Read Buffer : \n%s",read_buf);
 				
 				/*
 				*	-> send a message on a socket
