@@ -18,6 +18,8 @@
  * Termination-in-Handler.html
  *
  * https://www.thegeekstuff.com/2012/02/c-daemon-process/ 
+ *
+ * https://beej.us/guide/bgnet/html/#getaddrinfoprepare-to-launch
  ************************************************************************/
 #include "aesdsocket.h"
 
@@ -43,34 +45,34 @@ void socket_application();
 // Termination-in-Handler.html
 void handle_termination(int signo)
 {
-	syslog(LOG_INFO,"Caught signal, exiting\n");
-	
-	
-	/* 
-	* Since this handler is established for more than one kind of signal, 
-	* it might still get invoked recursively by delivery of some other 
-	* kind of signal. Use a static variable to keep track of that.
-	*/
-	if (cleanup)
-		raise (signo);
-	cleanup = 1;
-	
-	/*
-	* Clean-up actions
-	*/
-	global_clean_up();
-	
-	
+	if(signo == SIGINT || signo == SIGTERM)
+	{
+		syslog(LOG_INFO,"Caught signal, exiting\n");
 
-	/* 
-	* Now reraise the signal.  We reactivate the signal’s
-	* default handling, which is to terminate the process.
-	* We could just call exit or abort,
-	* but reraising the signal sets the return status
-	* from the process correctly.
-	*/
-	signal(signo, SIG_DFL);
-	raise(signo);
+		/* 
+		* Since this handler is established for more than one kind of signal, 
+		* it might still get invoked recursively by delivery of some other 
+		* kind of signal. Use a static variable to keep track of that.
+		*/
+		if (cleanup)
+			raise (signo);
+		cleanup = 1;
+		
+		/*
+		* Clean-up actions
+		*/
+		global_clean_up();		
+
+		/* 
+		* Now reraise the signal.  We reactivate the signal’s
+		* default handling, which is to terminate the process.
+		* We could just call exit or abort,
+		* but reraising the signal sets the return status
+		* from the process correctly.
+		*/
+		signal(signo, SIG_DFL);
+		raise(signo);
+	}
 }
 
 // get sockaddr, IPv4 or IPv6:
@@ -119,6 +121,7 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	
+	// to parse arguments
 	while((opt = getopt(argc, argv, "d")) != -1)  
 	{
 		switch(opt)  
@@ -129,10 +132,11 @@ int main(int argc, char *argv[])
         	}
 	}
 	
+	// run socket server application
 	socket_application();
 	
 	// return -1 if any command in 
-	// socket_application fails
+	// socket_application() fails
 	if(command_status.success)
 	{
 		return (0);
@@ -197,7 +201,7 @@ void socket_application()
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;	/* IPv4 */
 	hints.ai_socktype = SOCK_STREAM; /* stream socket */
-	hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+	hints.ai_flags = AI_PASSIVE;    /* For local IP address */
 	hints.ai_protocol = 0;          /* Any protocol */
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;

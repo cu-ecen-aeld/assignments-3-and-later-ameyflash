@@ -1,6 +1,6 @@
 #! /bin/sh
 
-echo "Checking for arguments..."
+echo "Checking arguments for aesdsocket script..."
 if [ $# -ne 1 ]; then
     echo "Error : Arguments not specified correctly!!!"
     echo "Usage: $ ./aesdsocket-start-stop.sh <start/stop>"
@@ -25,4 +25,4 @@ case "$1" in
 		exit 1
 esac
 
-exit 0	
+exit 0
