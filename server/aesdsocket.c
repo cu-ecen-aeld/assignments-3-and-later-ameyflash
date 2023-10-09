@@ -151,6 +151,7 @@ void socket_application()
 {
 	// local variables
 	int ret;
+	int fd;
 	
 	// receive bytes
 	ssize_t recv_bytes = 0;
@@ -332,15 +333,59 @@ void socket_application()
 			pid_t sid = setsid();
 			if(sid < 0)
 			{
-				// Return failure
-				exit(1);
+				ERROR_LOG("setsid failed\n");
+				syslog(LOG_ERR,"setsid failed");
+				command_status.success = false;
+				break;
 			}
 			// Change the current working directory to root.
-			chdir("/");
+			ret = chdir("/");
+			if(ret == RET_ERROR)
+			{
+				ERROR_LOG("chdir failed\n");
+				syslog(LOG_ERR,"chdir failed");
+				command_status.success = false;
+				break;
+			}
 			// Close stdin. stdout and stderr
 			close(STDIN_FILENO);
 			close(STDOUT_FILENO);
 			close(STDERR_FILENO);
+			
+			// redirect stdin, stdout, stderr to /dev/null
+			fd = open("/dev/null", O_RDWR);
+			if(ret == RET_ERROR)
+			{
+				ERROR_LOG("chdir failed\n");
+				syslog(LOG_ERR,"chdir failed");
+				command_status.success = false;
+				break;
+			}
+			ret = dup2(fd, STDIN_FILENO);
+			if(ret == RET_ERROR)
+			{
+				ERROR_LOG("stdin redirect failed\n");
+				syslog(LOG_ERR,"stdin redirect failed");
+				command_status.success = false;
+				break;
+			}
+			ret = dup2(fd, STDOUT_FILENO);
+			if(ret == RET_ERROR)
+			{
+				ERROR_LOG("stdout redirect failed\n");
+				syslog(LOG_ERR,"stdout redirect failed");
+				command_status.success = false;
+				break;
+			}
+			ret = dup2(fd, STDERR_FILENO);
+			if(ret == RET_ERROR)
+			{
+				ERROR_LOG("stderr redirect failed\n");
+				syslog(LOG_ERR,"stderr redirect failed");
+				command_status.success = false;
+				break;
+			}
+			close(fd);
 		}
 		
 		/*
