@@ -2,10 +2,10 @@
  
 ################# Compiler Flags ##################
 CC = $(CROSS_COMPILE)gcc
-CFLAGS = -Wall -Werror -g
+CFLAGS = -Wall -Werror -g -pthread
 
 ############## Source & Executable ################
-SRCS = *.c
+SRCS = aesdsocket.c
 EXEC = aesdsocket
 
 ##################### Targets #####################
