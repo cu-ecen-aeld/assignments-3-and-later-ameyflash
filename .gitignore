@@ -6,8 +6,16 @@ crosstool-ng
 aesd-build
 .vscode/
 test.sh.log
+<<<<<<< HEAD
 finder-app/writedir
 testfile.txt
 server/aesdsocket
 server/valgrind-out.txt
+server/aesdsocket_single_threaded.c
+server/aesdsocket_st_modular.c
 
+=======
+aesdsocket
+server/aesdsocket
+server/valgrind-out.txt
+>>>>>>> assignments-base/assignment6
