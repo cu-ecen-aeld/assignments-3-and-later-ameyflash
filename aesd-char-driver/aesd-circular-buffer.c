@@ -12,7 +12,6 @@
 #include <linux/string.h>
 #else
 #include <string.h>
-#include <stdio.h>
 #endif
 
 #include "aesd-circular-buffer.h"
