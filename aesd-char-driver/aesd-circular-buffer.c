@@ -12,6 +12,7 @@
 #include <linux/string.h>
 #else
 #include <string.h>
+#include <stdio.h>
 #endif
 
 #include "aesd-circular-buffer.h"
@@ -29,10 +30,56 @@
 struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct aesd_circular_buffer *buffer,
             size_t char_offset, size_t *entry_offset_byte_rtn )
 {
-    /**
-    * TODO: implement per description
-    */
-    return NULL;
+    // get the current out_offs location
+    uint8_t out_offs = buffer->out_offs;
+
+    // while char_offset is greater than size of the current entry
+    // reduce offset by size of current entry
+    // advance the out_offs location
+    while(char_offset >= buffer->entry[out_offs].size)
+    {
+        char_offset -= buffer->entry[out_offs].size;
+
+        // advance the out_offs location
+        if(out_offs == (AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED - 1))
+        {
+            out_offs = 0;
+        }
+        else
+        {
+            out_offs++;
+        }
+        
+        // check if offset exceeds last byte
+        if(out_offs == buffer->in_offs)
+        {
+            if(char_offset <= 0)
+            {
+                return NULL;
+            }
+        }
+
+        // if entry doesn't exist
+        // return NULL for no data found
+        if(buffer->entry[out_offs].buffptr == NULL)
+        {
+            return NULL;
+        }
+    }
+    
+    // if entry doesn't exist
+    // return NULL for no data found
+    if(buffer->entry[out_offs].buffptr == NULL)
+    {
+        return NULL;
+    }
+
+    // store byte of the returned aesd_buffer_entry->buffptr member
+    // corresponding to char_offset.
+    *entry_offset_byte_rtn = char_offset;
+
+    // return buffer entry
+    return &(buffer->entry[out_offs]);
 }
 
 /**
@@ -44,9 +91,42 @@ struct aesd_buffer_entry *aesd_circular_buffer_find_entry_offset_for_fpos(struct
 */
 void aesd_circular_buffer_add_entry(struct aesd_circular_buffer *buffer, const struct aesd_buffer_entry *add_entry)
 {
-    /**
-    * TODO: implement per description
-    */
+    // when buffer is not full
+    if(buffer->full == false)
+    {
+        // store buffer entry
+        buffer->entry[buffer->in_offs].buffptr = add_entry->buffptr;
+        buffer->entry[buffer->in_offs].size = add_entry->size;
+
+        // check if in_offs location has reached end of buffer
+        if(buffer->in_offs == (AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED - 1))
+        {
+            // go back to start of buffer
+            buffer->in_offs = 0;
+        }
+        else
+        {
+            // increment in_offs location
+            buffer->in_offs++;
+        }
+
+        // check and set if buffer is full
+        if(buffer->in_offs == buffer->out_offs)
+        {
+            buffer->full = true;
+        }
+    }
+    // when buffer is full
+    else if(buffer->full == true)
+    {
+        // store buffer entry
+        buffer->entry[buffer->in_offs].buffptr = add_entry->buffptr;
+        buffer->entry[buffer->in_offs].size = add_entry->size;
+
+        // increment in_offs and out_offs location
+        buffer->in_offs++;
+        buffer->out_offs++;
+    }
 }
 
 /**
