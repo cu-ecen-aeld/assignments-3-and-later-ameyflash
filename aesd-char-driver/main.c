@@ -30,11 +30,11 @@ struct aesd_dev aesd_device;
 
 int aesd_open(struct inode *inode, struct file *filp)
 {
+    struct aesd_dev *dev = NULL;
     PDEBUG("open");
     /**
      * TODO: handle open
      */
-    struct aesd_dev *dev = NULL;
     dev = container_of(inode->i_cdev, struct aesd_dev, cdev);
     filp->private_data = dev; 
     return 0;
@@ -54,14 +54,13 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
                 loff_t *f_pos)
 {
     ssize_t retval = 0;
+    ssize_t entry_offset = 0;
+    struct aesd_buffer_entry *entry = NULL;
+    ssize_t bytes_to_copy = 0;
     PDEBUG("read %zu bytes with offset %lld",count,*f_pos);
     /**
      * TODO: handle read
      */
-     
-    size_t entry_offset = 0;
-    struct aesd_buffer_entry *entry = NULL;
-    ssize_t bytes_to_copy = 0;
     
     // check arguments
     if ((filp == NULL) || (buf == NULL))
@@ -100,12 +99,12 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
                 loff_t *f_pos)
 {
     ssize_t retval = -ENOMEM;
+    struct aesd_dev *dev = NULL;
+    const char *free_buffptr = NULL;
     PDEBUG("write %zu bytes with offset %lld",count,*f_pos);
     /**
      * TODO: handle write
      */
-     
-    struct aesd_dev *dev = NULL;
      
     // check arguments
     if ((filp == NULL) || (buf == NULL))
@@ -219,14 +218,14 @@ int aesd_init_module(void)
 void aesd_cleanup_module(void)
 {
     dev_t devno = MKDEV(aesd_major, aesd_minor);
+    uint8_t i = 0;
+    struct aesd_buffer_entry *entry = NULL;
 
     cdev_del(&aesd_device.cdev);
 
     /**
      * TODO: cleanup AESD specific poritions here as necessary
      */
-    uint8_t i = 0;
-    struct aesd_buffer_entry *entry = NULL;
     
     // free buffer
     AESD_CIRCULAR_BUFFER_FOREACH(entry, &aesd_device.buffer, i)
