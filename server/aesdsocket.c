@@ -641,6 +641,7 @@ void global_clean_up()
 	closelog();
 }
 
+#if (USE_AESD_CHAR_DEVICE != 1)
 // timestamp struct init
 int setup_timestamp()
 {
@@ -661,7 +662,6 @@ int setup_timestamp()
     return 0;
 }
 
-#if (USE_AESD_CHAR_DEVICE != 1)
 // thread to log timestamps
 void *timestamp_thread(void *thread_param)
 {
