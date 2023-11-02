@@ -25,6 +25,14 @@
  ************************************************************************/
 #include "aesdsocket.h"
 
+#define USE_AESD_CHAR_DEVICE (1) // used for build switching
+
+#if (USE_AESD_CHAR_DEVICE == 1)
+	#define DATA_FILE "/dev/aesdchar"
+#else
+	#define DATA_FILE "/var/tmp/aesdsocketdata"
+#endif
+
 /*
 *   Global Data
 */
@@ -33,7 +41,7 @@ volatile sig_atomic_t terminate_process = 0;
 // Daemon application
 bool daemon_mode = false;
 // Outout data file
-char *data_file = "/var/tmp/aesdsocketdata";
+//char *data_file = "/var/tmp/aesdsocketdata";
 int data_file_fd;
 // Server & Client Socket fd
 int socket_fd;
@@ -131,7 +139,7 @@ int main(int argc, char *argv[])
     // open data file
 	file_flags = (O_RDWR | O_CREAT | O_APPEND);
 	file_mode = (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH);
-	data_file_fd = open(data_file, file_flags, file_mode);
+	data_file_fd = open(DATA_FILE, file_flags, file_mode);
 	if(data_file_fd == RET_ERROR)
 	{
 		syslog(LOG_ERR,"Data file open failed");
@@ -189,11 +197,13 @@ int socket_application()
         }
     }
 
+#if (USE_AESD_CHAR_DEVICE != 1)
     ret = setup_timestamp();
     if(ret == RET_ERROR)
     {
         return -1;
     }
+#endif
 
     /********************************************************* 
     *  STEP 3:
@@ -597,12 +607,14 @@ void global_clean_up()
 		syslog(LOG_ERR,"File close failed");
 	}
 	
+#if (USE_AESD_CHAR_DEVICE != 1)
 	// delete data file
-	ret = unlink(data_file);
+	ret = unlink(DATA_FILE);
 	if(ret == RET_ERROR)
 	{
 		syslog(LOG_ERR,"File delete failed");
 	}
+#endif
 
     // free the elements from the queue
     while (!SLIST_EMPTY(&head))
@@ -613,8 +625,10 @@ void global_clean_up()
         new_node = NULL;
     }
 
+#if (USE_AESD_CHAR_DEVICE != 1)
     // join timestamp thread
     pthread_join(timestamp_data.thread_id, NULL);
+#endif
 
     // destroy mutex
     pthread_mutex_destroy(&mutex);
@@ -647,6 +661,7 @@ int setup_timestamp()
     return 0;
 }
 
+#if (USE_AESD_CHAR_DEVICE != 1)
 // thread to log timestamps
 void *timestamp_thread(void *thread_param)
 {
@@ -710,4 +725,4 @@ void *timestamp_thread(void *thread_param)
     }
 
 }
-
+#endif
