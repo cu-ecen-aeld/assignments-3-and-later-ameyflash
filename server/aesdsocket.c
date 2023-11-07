@@ -516,10 +516,10 @@ void *recv_send_thread(void *thread_param)
         }
         
 #if (USE_AESD_CHAR_DEVICE == 1)
-	if (strcmp(buffer, ioctl_str) == 0)
+	if (strcmp(recv_buf, ioctl_str) == 0)
 	{
 		struct aesd_seekto aesd_seekto_data;
-		sscanf(buf, "AESDCHAR_IOCSEEKTO:%d,%d", &aesd_seekto_data.write_cmd, &aesd_seekto_data.write_cmd_offset); 
+		sscanf(recv_buf, "AESDCHAR_IOCSEEKTO:%d,%d", &aesd_seekto_data.write_cmd, &aesd_seekto_data.write_cmd_offset); 
 		
 	    	if(ioctl(data_file_fd, AESDCHAR_IOCSEEKTO, &aesd_seekto_data))
 	    	{
