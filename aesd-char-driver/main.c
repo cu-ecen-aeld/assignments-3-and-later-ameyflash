@@ -77,7 +77,9 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
         PDEBUG("aesd_read() invalid arguments");
         return -EINVAL;
     }
-    
+
+    dev = filp->private_data;
+	
     // acquire lock
     if (mutex_lock_interruptible(&dev->lock) != 0)
     {
