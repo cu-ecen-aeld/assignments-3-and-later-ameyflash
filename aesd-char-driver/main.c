@@ -65,6 +65,7 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
     ssize_t entry_offset = 0;
     struct aesd_buffer_entry *entry = NULL;
     ssize_t bytes_to_copy = 0;
+    struct aesd_dev *dev = NULL;
     PDEBUG("read %zu bytes with offset %lld",count,*f_pos);
     /**
      * handle read
@@ -124,7 +125,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 {
     ssize_t retval = -ENOMEM;
     struct aesd_dev *dev = NULL;
-    const char *free_buffptr = NULL;
+    //const char *free_buffptr = NULL;
     PDEBUG("write %zu bytes with offset %lld",count,*f_pos);
     /**
      * handle write
@@ -274,8 +275,7 @@ long aesd_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
         		}
         		else
         		{
-				retval = aesd_adjust_file_offset(filp, aesd_seekto_data.write_cmd,\ 
-								   aesd_seekto_data.write_cmd_offset);
+				retval = aesd_adjust_file_offset(filp, aesd_seekto_data.write_cmd, aesd_seekto_data.write_cmd_offset);
         		}
         	break;
 
