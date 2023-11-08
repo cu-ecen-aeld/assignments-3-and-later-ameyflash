@@ -494,9 +494,9 @@ void *recv_send_thread(void *thread_param)
 	if(data_file_fd == RET_ERROR)
 	{
 		syslog(LOG_ERR,"Data file open failed");
-        DEBUG_LOG("Application Failure\n");
-        DEBUG_LOG("Check logs\n");
-        return -1;
+        	DEBUG_LOG("Application Failure\n");
+        	DEBUG_LOG("Check logs\n");
+        	return NULL;
 	}
 
     /********************************************************* 
@@ -516,45 +516,43 @@ void *recv_send_thread(void *thread_param)
             return NULL;
         }
         
-#if (USE_AESD_CHAR_DEVICE == 1)
-	if (strcmp(recv_buf, ioctl_str) == 0)
+	if (strncmp(recv_buf, ioctl_str, strlen(ioctl_str)) == 0)
 	{
 		struct aesd_seekto aesd_seekto_data;
 		sscanf(recv_buf, "AESDCHAR_IOCSEEKTO:%d,%d", &aesd_seekto_data.write_cmd, &aesd_seekto_data.write_cmd_offset); 
 		
 	    	if(ioctl(data_file_fd, AESDCHAR_IOCSEEKTO, &aesd_seekto_data))
 	    	{
-			syslog(LOG_ERR,"ioctl failed\n");
+			syslog(LOG_ERR,"ioctl failed");
 			return NULL;
 	    	}
 	}
-#endif
-
-#if (USE_AESD_CHAR_DEVICE != 1)
-	// acquire lock
-	ret = pthread_mutex_lock(thread_data->mutex);
-	if(ret == RET_ERROR)
+	else
 	{
-		syslog(LOG_ERR,"mutex lock failed\n");
-		return NULL;
-	}
+		// acquire lock
+		ret = pthread_mutex_lock(thread_data->mutex);
+		if(ret == RET_ERROR)
+		{
+			syslog(LOG_ERR,"mutex lock failed\n");
+			return NULL;
+		}
 
-        // write data to file
-        ret = write(data_file_fd, recv_buf, recv_bytes);
-        if(ret == RET_ERROR)
-        {
-            syslog(LOG_ERR,"File write failed");
-            return NULL;
-        }
-        
-        // release lock
-    	ret = pthread_mutex_unlock(thread_data->mutex);
-    	if(ret == RET_ERROR)
-    	{
-        	syslog(LOG_ERR,"mutex unlock failed\n");
-        	return NULL;
+		// write data to file
+		ret = write(data_file_fd, recv_buf, recv_bytes);
+		if(ret == RET_ERROR)
+		{
+		    syslog(LOG_ERR,"File write failed");
+		    return NULL;
+		}
+		
+		// release lock
+	    	ret = pthread_mutex_unlock(thread_data->mutex);
+	    	if(ret == RET_ERROR)
+	    	{
+			syslog(LOG_ERR,"mutex unlock failed\n");
+			return NULL;
+	    	}
     	}
-#endif
     }while((memchr(recv_buf, '\n', recv_bytes)) == NULL);
 
 
@@ -609,7 +607,7 @@ void *recv_send_thread(void *thread_param)
         }
     }while(bytes_read > 0);
 
-    close(data_file_fd);
+    //close(data_file_fd);
     close(thread_data->accept_fd);
     syslog(LOG_INFO,"Closed connection from %s",s);
 

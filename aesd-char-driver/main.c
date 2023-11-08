@@ -66,8 +66,7 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
     struct aesd_buffer_entry *entry = NULL;
     ssize_t bytes_to_copy = 0;
     struct aesd_dev *dev = NULL;
-    PDEBUG("aesd_read");
-    PDEBUG("read %zu bytes with offset %lld",count,*f_pos);
+    PDEBUG("aesd read %zu bytes with offset %lld",count,*f_pos);
     /**
      * handle read
      */
