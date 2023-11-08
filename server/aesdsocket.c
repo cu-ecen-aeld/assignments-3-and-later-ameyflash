@@ -140,18 +140,6 @@ int main(int argc, char *argv[])
 	// signal handler for SIGINT and SIGTERM
 	signal(SIGINT, handle_termination);
 	signal(SIGTERM, handle_termination);
-
-    // open data file
-	file_flags = (O_RDWR | O_CREAT | O_APPEND);
-	file_mode = (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH);
-	data_file_fd = open(DATA_FILE, file_flags, file_mode);
-	if(data_file_fd == RET_ERROR)
-	{
-		syslog(LOG_ERR,"Data file open failed");
-        DEBUG_LOG("Application Failure\n");
-        DEBUG_LOG("Check logs\n");
-        return -1;
-	}
 	
 	// run socket server application
     syslog(LOG_INFO,"AESD Socket application started");
@@ -498,6 +486,18 @@ void *recv_send_thread(void *thread_param)
 	syslog(LOG_INFO,"Accepted connection from %s",s);
 
 	syslog(LOG_INFO,"Started thread %ld",thread_data->thread_id);
+
+	    // open data file
+	file_flags = (O_RDWR | O_CREAT | O_APPEND);
+	file_mode = (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH);
+	data_file_fd = open(DATA_FILE, file_flags, file_mode);
+	if(data_file_fd == RET_ERROR)
+	{
+		syslog(LOG_ERR,"Data file open failed");
+        DEBUG_LOG("Application Failure\n");
+        DEBUG_LOG("Check logs\n");
+        return -1;
+	}
 
     /********************************************************* 
     *  STEP 4 : 
