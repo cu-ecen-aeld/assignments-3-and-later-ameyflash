@@ -108,10 +108,6 @@ int main(int argc, char *argv[])
 	int opt;
     int ret;
 
-	// for data output file
-	int file_flags;
-	mode_t file_mode;
-
     // for linked list
     SLIST_INIT(&head);
 
@@ -466,6 +462,10 @@ void *recv_send_thread(void *thread_param)
     	// receive bytes
 	ssize_t recv_bytes = 0;
 	char recv_buf[BUF_LEN];
+
+	// for data output file
+	int file_flags;
+	mode_t file_mode;
 	
 	// send bytes
 	ssize_t send_bytes = 0;
