@@ -84,12 +84,13 @@ void handle_termination(int signo)
 			syslog(LOG_ERR,"shutdown failed");
 		}
 
+#if (USE_AESD_CHAR_DEVICE != 1)
         ret = pthread_cancel(timestamp_data.thread_id);
         if(ret != 0)
         {
             syslog(LOG_ERR,"pthread cancel failed");
         }
-
+#endif
 
 		terminate_process = 1;
 	}
@@ -139,18 +140,6 @@ int main(int argc, char *argv[])
 	// signal handler for SIGINT and SIGTERM
 	signal(SIGINT, handle_termination);
 	signal(SIGTERM, handle_termination);
-
-    // open data file
-	file_flags = (O_RDWR | O_CREAT | O_APPEND);
-	file_mode = (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH);
-	data_file_fd = open(DATA_FILE, file_flags, file_mode);
-	if(data_file_fd == RET_ERROR)
-	{
-		syslog(LOG_ERR,"Data file open failed");
-        DEBUG_LOG("Application Failure\n");
-        DEBUG_LOG("Check logs\n");
-        return -1;
-	}
 	
 	// run socket server application
     syslog(LOG_INFO,"AESD Socket application started");
@@ -498,6 +487,18 @@ void *recv_send_thread(void *thread_param)
 
 	syslog(LOG_INFO,"Started thread %ld",thread_data->thread_id);
 
+	    // open data file
+	file_flags = (O_RDWR | O_CREAT | O_APPEND);
+	file_mode = (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH);
+	data_file_fd = open(DATA_FILE, file_flags, file_mode);
+	if(data_file_fd == RET_ERROR)
+	{
+		syslog(LOG_ERR,"Data file open failed");
+        DEBUG_LOG("Application Failure\n");
+        DEBUG_LOG("Check logs\n");
+        return -1;
+	}
+
     /********************************************************* 
     *  STEP 4 : 
     *  Receives data over the connection and 
@@ -563,13 +564,14 @@ void *recv_send_thread(void *thread_param)
     *  to the client as soon as the received data packet 
     *  completes.
     *********************************************************/
-
+#if (USE_AESD_CHAR_DEVICE != 1)
     off_t seek_ret = lseek(data_file_fd, 0, SEEK_SET);
     if(seek_ret == RET_ERROR)
     {
         syslog(LOG_ERR,"lseek failed");
         return NULL;
     }
+#endif
 
     // read and send
     do
@@ -607,6 +609,7 @@ void *recv_send_thread(void *thread_param)
         }
     }while(bytes_read > 0);
 
+    close(data_file_fd);
     close(thread_data->accept_fd);
     syslog(LOG_INFO,"Closed connection from %s",s);
 
