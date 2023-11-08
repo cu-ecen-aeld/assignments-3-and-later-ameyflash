@@ -66,7 +66,7 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
     struct aesd_buffer_entry *entry = NULL;
     ssize_t bytes_to_copy = 0;
     struct aesd_dev *dev = NULL;
-    PDEBUG("aesd read %zu bytes with offset %lld",count,*f_pos);
+    PDEBUG("read %zu bytes with offset %lld",count,*f_pos);
     /**
      * handle read
      */
@@ -89,32 +89,26 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
     
     entry = aesd_circular_buffer_find_entry_offset_for_fpos(&aesd_device.buffer,*f_pos, &entry_offset);
     
-    do
+    if(entry != NULL)
     {
-	    if(entry != NULL)
-	    {
-	    	bytes_to_copy = (entry->size - entry_offset);
-		if (bytes_to_copy > count)
-		{
-		    bytes_to_copy = count;
-		}
-		
-		retval = copy_to_user(buf, (entry->buffptr + entry_offset), bytes_to_copy);
-		if (retval != 0)
-		{
-		    PDEBUG("copy_to_user() error retval=%zu", retval);
-		    //return -EINVAL;
-		    retval = -EINVAL;
-		    break;
-		}
-		else
-		{
-		    retval = (bytes_to_copy - retval);
-		    *f_pos += retval;
-		}
-	    }
+    	bytes_to_copy = (entry->size - entry_offset);
+	if (bytes_to_copy > count)
+	{
+	    bytes_to_copy = count;
+	}
+	
+	retval = copy_to_user(buf, (entry->buffptr + entry_offset), bytes_to_copy);
+	if (retval != 0)
+	{
+	    PDEBUG("copy_to_user() error retval=%zu", retval);
+	}
+	else
+	{
+	    PDEBUG("copy_to_user() success retval=%zu", retval);
+	}
+	retval = (bytes_to_copy - retval);
+	*f_pos += retval;
     }
-    while(0);
     
     // release lock
     mutex_unlock(&dev->lock);
@@ -125,9 +119,10 @@ ssize_t aesd_read(struct file *filp, char __user *buf, size_t count,
 ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
                 loff_t *f_pos)
 {
-    ssize_t retval = -ENOMEM;
+    ssize_t retval = 0;
     struct aesd_dev *dev = NULL;
     const char *free_buffptr = NULL;
+    
     PDEBUG("write %zu bytes with offset %lld",count,*f_pos);
     /**
      * handle write
@@ -149,22 +144,24 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
         return -ERESTARTSYS;
     }
     
-    // kernel malloc and error check
-    dev->entry.buffptr = kmalloc(count, GFP_KERNEL);
-    if(dev->entry.buffptr == NULL)
-    {
-	PDEBUG("kmalloc() error");
-	return -ENOMEM;
-    }
-    
     // run commands once
     do
     {
+        // kernel malloc and error check
+	dev->entry.buffptr = krealloc(dev->entry.buffptr, (dev->entry.size + count),
+                                  GFP_KERNEL);//kmalloc(count, GFP_KERNEL);
+	if(dev->entry.buffptr == NULL)
+	{
+		PDEBUG("krealloc() error");
+		retval = -ENOMEM;
+		break;
+	}
+    
     	retval = copy_from_user((void *)(dev->entry.buffptr + dev->entry.size), buf, count);
     	if (retval != 0)
 	{
 	    PDEBUG("copy_from_user() error retval=%zu", retval);
-	    break;
+	    //break;
 	}
     	retval = (count - retval);
     	dev->entry.size += retval;
@@ -197,6 +194,8 @@ loff_t aesd_llseek(struct file *filp, loff_t off, int whence)
     loff_t total_size = 0;
     struct aesd_dev *dev = NULL;
     struct aesd_buffer_entry *entry = NULL;
+    
+    PDEBUG("aesd_llseek()");
 
     dev = filp->private_data;
 	
@@ -223,10 +222,13 @@ loff_t aesd_llseek(struct file *filp, loff_t off, int whence)
 
 static long aesd_adjust_file_offset(struct file *filp, unsigned int write_cmd, unsigned int write_cmd_offset)
 {
-	int retval,i;
+	long retval = 0;
+	int i;
 	int entry_length;
 	struct aesd_dev *dev = filp->private_data;
 	struct aesd_buffer_entry *entry = NULL;
+	
+	PDEBUG("aesd_adjust_file_offset()");
 
 	// acquire lock
     	if (mutex_lock_interruptible(&dev->lock) != 0)
@@ -237,17 +239,20 @@ static long aesd_adjust_file_offset(struct file *filp, unsigned int write_cmd, u
 	
 	do
 	{
+		PDEBUG("aesd_adjust_file_offset() start");
 		// check if write_cmd exceeds max writes supported
-		if (write_cmd >= AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED)
-		{
+		if (write_cmd > AESDCHAR_MAX_WRITE_OPERATIONS_SUPPORTED)
+		{		
+			PDEBUG("invalid");
 			retval = -EINVAL;
 			break; // release lock and exit
 	    	}
 	    	
 	    	// check if write_cmd exceeds no. of entries present
 	    	AESD_CIRCULAR_BUFFER_FOREACH(entry,&aesd_device.buffer,entry_length);
-		if (write_cmd >= entry_length)
+		if (write_cmd > entry_length)
 		{
+			PDEBUG("invalid");
 			retval = -EINVAL;
 			break; // release lock and exit
 	    	}
@@ -255,6 +260,7 @@ static long aesd_adjust_file_offset(struct file *filp, unsigned int write_cmd, u
 		// check if offset exceeds size of entry
 		if (write_cmd_offset >= dev->buffer.entry[write_cmd].size)
 		{
+			PDEBUG("invalid");
 			retval = -EINVAL;
 			break; // release lock and exit
 	    	}
@@ -266,6 +272,8 @@ static long aesd_adjust_file_offset(struct file *filp, unsigned int write_cmd, u
 		}
 		filp->f_pos += write_cmd_offset;
 		
+		PDEBUG("aesd_adjust_file_offset() completed");
+		
 	}while(0);
 
 	// release lock
@@ -276,8 +284,10 @@ static long aesd_adjust_file_offset(struct file *filp, unsigned int write_cmd, u
 
 long aesd_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	int retval = 0;
+	long retval = 0;
  	struct aesd_seekto aesd_seekto_data;
+ 	
+	PDEBUG("aesd_ioctl()");
 
 	// check if the command passed is defined
 	if (_IOC_TYPE(cmd) != AESD_IOC_MAGIC)

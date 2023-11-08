@@ -458,6 +458,7 @@ int start_communication()
 // thread function for receive and send commmands
 void *recv_send_thread(void *thread_param)
 {
+	int is_ioctl = 1;
 	int ret;
     	// receive bytes
 	ssize_t recv_bytes = 0;
@@ -487,17 +488,10 @@ void *recv_send_thread(void *thread_param)
 
 	syslog(LOG_INFO,"Started thread %ld",thread_data->thread_id);
 
-	    // open data file
+	// open data file flags
 	file_flags = (O_RDWR | O_CREAT | O_APPEND);
 	file_mode = (S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP | S_IROTH);
-	data_file_fd = open(DATA_FILE, file_flags, file_mode);
-	if(data_file_fd == RET_ERROR)
-	{
-		syslog(LOG_ERR,"Data file open failed");
-        	DEBUG_LOG("Application Failure\n");
-        	DEBUG_LOG("Check logs\n");
-        	return NULL;
-	}
+	
 
     /********************************************************* 
     *  STEP 4 : 
@@ -516,19 +510,40 @@ void *recv_send_thread(void *thread_param)
             return NULL;
         }
         
-	if (strncmp(recv_buf, ioctl_str, strlen(ioctl_str)) == 0)
+        is_ioctl = strncmp(recv_buf, ioctl_str, strlen(ioctl_str));
+        
+	if (is_ioctl == 0)
 	{
 		struct aesd_seekto aesd_seekto_data;
 		sscanf(recv_buf, "AESDCHAR_IOCSEEKTO:%d,%d", &aesd_seekto_data.write_cmd, &aesd_seekto_data.write_cmd_offset); 
 		
-	    	if(ioctl(data_file_fd, AESDCHAR_IOCSEEKTO, &aesd_seekto_data))
+		data_file_fd = open(DATA_FILE, file_flags, file_mode);
+		if(data_file_fd == RET_ERROR)
+		{
+			syslog(LOG_ERR,"Data file open failed");
+			DEBUG_LOG("Application Failure\n");
+			DEBUG_LOG("Check logs\n");
+			return NULL;
+		}
+	
+		//ioctl(data_file_fd, AESDCHAR_IOCSEEKTO, &aesd_seekto_data);
+	    	if(ioctl(data_file_fd, AESDCHAR_IOCSEEKTO, &aesd_seekto_data) != 0)
 	    	{
 			syslog(LOG_ERR,"ioctl failed");
-			return NULL;
+			//return NULL;
 	    	}
 	}
 	else
 	{
+		data_file_fd = open(DATA_FILE, file_flags, file_mode);
+		if(data_file_fd == RET_ERROR)
+		{
+			syslog(LOG_ERR,"Data file open failed");
+			DEBUG_LOG("Application Failure\n");
+			DEBUG_LOG("Check logs\n");
+			return NULL;
+		}
+		
 		// acquire lock
 		ret = pthread_mutex_lock(thread_data->mutex);
 		if(ret == RET_ERROR)
@@ -552,6 +567,9 @@ void *recv_send_thread(void *thread_param)
 			syslog(LOG_ERR,"mutex unlock failed\n");
 			return NULL;
 	    	}
+	    	
+	    	// close data file
+		close(data_file_fd);
     	}
     }while((memchr(recv_buf, '\n', recv_bytes)) == NULL);
 
@@ -562,14 +580,23 @@ void *recv_send_thread(void *thread_param)
     *  to the client as soon as the received data packet 
     *  completes.
     *********************************************************/
-#if (USE_AESD_CHAR_DEVICE != 1)
-    off_t seek_ret = lseek(data_file_fd, 0, SEEK_SET);
-    if(seek_ret == RET_ERROR)
+    if(is_ioctl != 0)
     {
-        syslog(LOG_ERR,"lseek failed");
-        return NULL;
+    	/*off_t seek_ret = lseek(data_file_fd, 0, SEEK_SET);
+    	if(seek_ret == RET_ERROR)
+    	{
+        	syslog(LOG_ERR,"lseek failed");
+        	return NULL;
+    	}*/
+	data_file_fd = open(DATA_FILE, file_flags, file_mode);
+	if(data_file_fd == RET_ERROR)
+	{
+		syslog(LOG_ERR,"Data file open failed");
+		DEBUG_LOG("Application Failure\n");
+		DEBUG_LOG("Check logs\n");
+		return NULL;
+	}
     }
-#endif
 
     // read and send
     do
