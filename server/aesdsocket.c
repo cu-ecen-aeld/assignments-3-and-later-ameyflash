@@ -564,13 +564,14 @@ void *recv_send_thread(void *thread_param)
     *  to the client as soon as the received data packet 
     *  completes.
     *********************************************************/
-
+#if (USE_AESD_CHAR_DEVICE != 1)
     off_t seek_ret = lseek(data_file_fd, 0, SEEK_SET);
     if(seek_ret == RET_ERROR)
     {
         syslog(LOG_ERR,"lseek failed");
         return NULL;
     }
+#endif
 
     // read and send
     do
