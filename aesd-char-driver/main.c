@@ -128,7 +128,7 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 {
     ssize_t retval = -ENOMEM;
     struct aesd_dev *dev = NULL;
-    //const char *free_buffptr = NULL;
+    const char *free_buffptr = NULL;
     PDEBUG("write %zu bytes with offset %lld",count,*f_pos);
     /**
      * handle write
@@ -172,18 +172,17 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
     
     	if (dev->entry.buffptr[dev->entry.size-1] == '\n')
     	{
-    		// if buffer was added previously, free it
-		if (dev->buffer.entry[dev->buffer.in_offs].buffptr)
-		{
-		    dev->total_buffer_size -= dev->buffer.entry[dev->buffer.in_offs].size;
-		    kfree(dev->buffer.entry[dev->buffer.in_offs].buffptr);
-		}
-		
-		aesd_circular_buffer_add_entry(&dev->buffer, &dev->entry);
-		dev->total_buffer_size += dev->entry.size;
-		dev->entry.buffptr = NULL;
-		dev->entry.size = 0;
-        }
+    		free_buffptr = aesd_circular_buffer_add_entry(&dev->buffer, &dev->entry);
+	        // free previously allocated entry if any
+	        if (free_buffptr != NULL)
+	        {
+	            kfree(free_buffptr);
+	            free_buffptr = NULL;
+	        }
+	        
+	        dev->entry.buffptr = NULL;
+	        dev->entry.size = 0;
+	}
     }while(0);
     
     // release lock
@@ -194,10 +193,33 @@ ssize_t aesd_write(struct file *filp, const char __user *buf, size_t count,
 
 loff_t aesd_llseek(struct file *filp, loff_t off, int whence)
 {
-	loff_t new_pos;
-    	struct aesd_dev *dev = filp->private_data;
-	new_pos = fixed_size_llseek(filp, off, whence, dev->total_buffer_size);
-	return new_pos;
+    int entry_index = 0;
+    loff_t file_offset = 0;
+    loff_t total_size = 0;
+    struct aesd_dev *dev = NULL;
+    struct aesd_buffer_entry *entry = NULL;
+
+    dev = filp->private_data;
+	
+    // acquire lock
+    if (0 != mutex_lock_interruptible(&dev->lock))
+    {
+        PDEBUG("ERROR: mutex_lock_interruptible acquiring lock");
+        return -ERESTARTSYS;
+    }
+
+    // to get the total size
+    AESD_CIRCULAR_BUFFER_FOREACH(entry,&aesd_device.buffer,entry_index)
+    {
+        total_size += entry->size;
+    }
+	
+    // release lock
+    mutex_unlock(&dev->lock);
+
+    file_offset = fixed_size_llseek(filp, offset, whence, total_size);
+    
+    return file_offset;
 }
 
 static long aesd_adjust_file_offset(struct file *filp, unsigned int write_cmd, unsigned int write_cmd_offset)
