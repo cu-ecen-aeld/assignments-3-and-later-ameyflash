@@ -217,7 +217,7 @@ loff_t aesd_llseek(struct file *filp, loff_t off, int whence)
     // release lock
     mutex_unlock(&dev->lock);
 
-    file_offset = fixed_size_llseek(filp, offset, whence, total_size);
+    file_offset = fixed_size_llseek(filp, off, whence, total_size);
     
     return file_offset;
 }
