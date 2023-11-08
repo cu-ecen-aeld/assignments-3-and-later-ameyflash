@@ -32,7 +32,8 @@
 #include <signal.h>
 #include <pthread.h>
 #include <sys/queue.h>
-#include <time.h> 
+#include <time.h>
+#include "../aesd-char-driver/aesd_ioctl.h"
 
 // Optional: use these functions to add debug or error prints to your application
 #define DEBUG_LOG(msg,...) printf("INFO: " msg "\n" , ##__VA_ARGS__)
