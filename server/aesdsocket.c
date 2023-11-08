@@ -608,6 +608,7 @@ void *recv_send_thread(void *thread_param)
         }
     }while(bytes_read > 0);
 
+    close(data_file_fd);
     close(thread_data->accept_fd);
     syslog(LOG_INFO,"Closed connection from %s",s);
 
