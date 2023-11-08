@@ -84,12 +84,13 @@ void handle_termination(int signo)
 			syslog(LOG_ERR,"shutdown failed");
 		}
 
+#if (USE_AESD_CHAR_DEVICE != 1)
         ret = pthread_cancel(timestamp_data.thread_id);
         if(ret != 0)
         {
             syslog(LOG_ERR,"pthread cancel failed");
         }
-
+#endif
 
 		terminate_process = 1;
 	}
